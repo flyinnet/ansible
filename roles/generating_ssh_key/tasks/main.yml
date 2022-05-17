@@ -1,0 +1,20 @@
+- name: Ping the hosts
+  ping:
+
+- debug:
+    var: ansible_user
+
+    #- name: create ssh-key
+    #  user:
+    #    name: "{{ ansible_user }}"
+    #    generate_ssh_key: yes
+    #    ssh_key_bits: 2048
+    #    ssh_key_file: .ssh/id_rsa
+
+#parameter user = user_remote_machine;
+#parameter key = path_id_rsa_key on local machine (ansible host)
+- name: setup_authorized_key_from_id_rsa.pub_file
+  authorized_key:
+    user: "{{ ansible_user }}"
+    state: present
+    key: "{{ lookup('file', '/home/neon/.ssh/id_rsa.pub') }}"

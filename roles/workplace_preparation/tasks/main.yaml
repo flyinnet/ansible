@@ -1,0 +1,196 @@
+- name: include vaulted variables
+  include_vars: ~/workplace
+ 
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+
+#added repository
+- name: Check whether a package called teamviewer is installed
+  debug:
+    msg: "{{ ansible_facts.packages['teamviewer'] | length }} versions of teamviewer are installed!"
+  ignore_errors: yes
+  register: result
+
+- name: Add repository teamviewer
+  when: result['failed'] == true
+  block:
+  - apt_key:
+      url: https://download.teamviewer.com/download/linux/signature/TeamViewer2017.asc
+      state: present
+    become: yes
+    ignore_errors: yes
+
+  - apt_repository:
+      repo: deb https://linux.teamviewer.com/deb stable main
+      state: present
+    ignore_errors: yes
+    become: yes
+
+- name: Check whether a package called docker is installed
+  debug:
+    msg: "{{ ansible_facts.packages['docker-ce'] | length }} versions of docker are installed!"
+  ignore_errors: yes
+  register: result
+
+- name: Add repository docker
+  when: result['failed'] == true
+  block:
+  - apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+    become: yes
+    ignore_errors: yes
+
+  - apt_repository:
+      repo: deb https://download.docker.com/linux/ubuntu focal stable
+      state: present
+    become: yes
+    ignore_errors: yes
+
+  - name: create directory from docker-comopose
+    file:
+      path: /home/{{ansible_user}}/.docker-compose
+      state: directory
+
+  - name: install docker-compose
+    get_url:
+      url: https://github.com/docker/compose/releases/download/1.28.0/docker-compose-{{ansible_system}}-{{ansible_architecture}}
+      dest: /home/{{ansible_user}}/.docker-compose/docker-compose
+      mode: "0541"
+
+  - file:
+      src: /home/{{ansible_user}}/.docker-compose/docker-compose
+      dest: /usr/bin/docker-compose
+      state: link
+    become: yes
+#for ubuntu
+#- name: Check whether a package called dbeaver is installed
+#  debug:
+#    msg: "{{ ansible_facts.packages['dbeaver-ce'] | length }} versions of dbeaver-ce are installed!"
+#  ignore_errors: yes
+#  register: result
+#
+#- name: Add repository dbeaver
+#  when: result['failed'] == true
+#  block:
+#  - apt_repository:
+#      repo: ppa:serge-rider/dbeaver-ce
+#    become: yes
+
+- name: Check whether a package called skype is installed
+  debug:
+    msg: "{{ ansible_facts.packages['skypeforlinux'] | length }} versions of skype are installed!"
+  ignore_errors: yes
+  register: result
+
+- name: Add repository skype
+  when: result['failed'] == true
+  block:
+  - apt_key:
+      url: https://repo.skype.com/data/SKYPE-GPG-KEY
+      state: present
+    become: yes
+
+  - apt_repository:
+      repo: deb [arch=amd64] https://repo.skype.com/deb stable main
+    become: yes
+
+#install kubectl
+- name: Check whether a package called kubectl is installed
+  debug:
+    msg: "{{ ansible_facts.packages['kubectl'] | length }} versions of kubectl are installed!"
+  ignore_errors: yes
+  register: result
+
+- name: Add repository kubectl
+  when: result['failed'] == true
+  block:
+  - name: Add an apt signing key for Kubernetes
+    apt_key:
+      url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+      state: present
+    become: yes
+
+  - name: Adding apt repository for Kubernetes
+    apt_repository:
+      repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+      state: present
+      filename: kubernetes
+    become: yes
+
+- name: Check whether a package called helm is installed
+  debug:
+    msg: "{{ ansible_facts.packages['helm'] | length }} versions of helm are installed!"
+  ignore_errors: yes
+  register: result
+
+- name: Add repository helm
+  when: result['failed'] == true
+  block:
+  - name: add helm apt_key
+    apt_key:
+      url: https://baltocdn.com/helm/signing.asc
+      state: present
+    become: yes
+
+  - name: add helm repository
+    apt_repository:
+      repo: deb https://baltocdn.com/helm/stable/debian/ all main
+      state: present
+      filename: helm
+    become: yes
+ 
+#install pycharm repository for pycharm https://www.jetbrains.com/pycharm/download/download-thanks.html?platform=linux&code=PCC https://download.jetbrains.com/python/pycharm-professional-2020.3.2.tar.gz.sha256
+- name: Check if the application is installed the pycharm
+  stat:
+    path: ~/pycharm-community
+  register: result
+ 
+- name: install pycharm  i
+  when: result['stat']['exists'] == false
+  block:
+    - get_url:
+        url: https://download-cf.jetbrains.com/python/pycharm-community-2020.3.2.tar.gz
+        dest: /home/{{ansible_user}}/pycharm-community.tar.gz
+        mode: '0440'
+
+    - file:
+        path: /home/{{ansible_user}}/pycharm-community
+        state: directory
+
+    - unarchive:
+        remote_src: yes
+        src: /home/{{ansible_user}}/pycharm-community.tar.gz
+        dest: /home/{{ansible_user}}/pycharm-community
+    
+    - file:
+        src: /home/{{ansible_user}}/pycharm-community/pycharm-community-2020.3.2/bin/pycharm.sh
+        dest: /usr/bin/pycharm.sh
+        state: link
+      become: yes
+
+    - name: Delete temporary files
+      file:
+        path: /home/{{ansible_user}}/pycharm-community.tar.gz
+        state: absent
+
+#installing main applications
+- name: Make_sure_the_packeges_is_installed
+  apt:
+    package: [python3, vim, geany, git, tcpdump, iperf, evolution, virtualbox, steam, kazam, goldendict, remmina, keepass2, telegram-cli, firefox, mc, gimp, openvpn, ssh, postgresql, flameshot, libreoffice, guake, terminator, transmission, vlc, iperf3, apt-transport-https, ca-certificates, curl, gnupg-agent, software-properties-common, teamviewer, docker-ce, docker-ce-cli, containerd.io, dbeaver-ce, skypeforlinux, fail2ban, kubectl, helm, tightvncserver, htop]
+    update_cache: yes
+  become: yes
+
+#start vncserver
+- name: start vnc_server
+  expect:
+    command: vncserver
+    responses:
+      (?i)Password: "DukeNuken3D"
+            #      Question:
+            #        - 'DukeNuken3D'
+            #        - 'DukeNuken3D'
+            #        - 'y'
+            #        - 'Neon001'
+            #        - 'Neon001'

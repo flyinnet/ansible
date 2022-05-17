@@ -1,0 +1,39 @@
+- name : facts
+  hosts : all
+  become : false
+
+  tasks:
+    - name: Recursively remove directory
+      file:
+        path: /tmp/technical_requerments_VM
+        state: absent
+      delegate_to: localhost
+
+    - name: Create a directory if it does not exist
+      file:
+        path: /tmp/technical_requerments_VM
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+
+    - name: Disks
+      set_fact:
+        disk_memory_size: "{{item['size_total'] / 1024 / 1024}}"
+      with_list: "{{ansible_facts['mounts']}}"
+
+    - name: create_Dict_variable
+      set_fact:
+        result_dict: 
+          hostname: "{{ansible_facts['hostname']}}"
+          CPU_core: "{{ansible_facts['processor_cores']}}"
+          RAM: "{{ansible_facts['memory_mb']['real']['total']}}"
+          disk_memory_size: "{{disk_memory_size }}"
+
+    - debug:
+        var: result_dict
+    
+    - name: save technical_requerments
+      copy: 
+        content: "{{ result_dict }}"
+        dest: /tmp/technical_requerments_VM/{{ ansible_facts['hostname'] }}.json
+      delegate_to: localhost

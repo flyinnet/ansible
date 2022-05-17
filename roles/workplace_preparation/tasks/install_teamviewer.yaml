@@ -1,0 +1,16 @@
+- name: Download package teamviewer
+  get_url:
+    url: https://download.teamviewer.com/download/linux/teamviewer_amd64.deb
+    dest: /home/kubuntu/teamviewer_amd64.deb
+    mode: '0440'
+
+- name: Install a .deb package
+  apt:
+    deb: /home/kubuntu/teamviewer_amd64.deb
+  become: yes
+
+- name: Delete temporary files
+  file:
+    path: ~/teamviewer_amd64.deb
+    state: absent
+

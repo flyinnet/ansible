@@ -1,0 +1,4 @@
+#vars_files: /home/neon/secret
+#ansible_become_password: "{{ vault_ansible_become_password }}"
+ansible_python_interpreter: /usr/bin/python3
+ansible_user: test

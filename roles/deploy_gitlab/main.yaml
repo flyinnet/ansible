@@ -1,0 +1,84 @@
+- name: include vaulted variables
+  include_vars: ~/workplace
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+
+- name: Check whether a package called teamviewer is installed
+  debug:
+    msg: "{{ ansible_facts.packages['git'] | length }} versions of teamviewer are installed!"
+  ignore_errors: yes
+  register: result
+
+- name: Check whether a package called docker is installed
+  debug:
+    msg: "{{ ansible_facts.packages['docker-ce'] | length }} versions of docker are installed!"
+  ignore_errors: yes
+  register: result
+
+- name: Add repository docker
+  when: result['failed'] == true
+  block:
+  - apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+    become: yes
+    ignore_errors: yes
+
+- name: Add repository docker
+  when: result['failed'] == true
+  block:
+  - apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+    become: yes
+    ignore_errors: yes
+
+  - apt_repository:
+      repo: deb https://download.docker.com/linux/ubuntu focal stable
+      state: present
+    become: yes
+    ignore_errors: yes
+
+  - name: create directory from docker-comopose
+    file:
+      path: /home/{{ansible_user}}/.docker-compose
+      state: directory
+
+  - name: install docker-compose
+    get_url:
+      url: https://github.com/docker/compose/releases/download/1.28.0/docker-compose-{{ansible_system}}-{{ansible_architecture}}
+      dest: /home/{{ansible_user}}/.docker-compose/docker-compose
+      mode: "0541"
+
+  - file:
+      src: /home/{{ansible_user}}/.docker-compose/docker-compose
+      dest: /usr/bin/docker-compose
+      state: link
+    become: yes
+
+#installing main applications
+- name: Make_sure_the_packeges_is_installed
+  apt:
+    package: [python3, vim, git docker-ce, docker-ce-cli, containerd.io, fail2ban]
+    update_cache: yes
+  become: yes
+
+ - name: start backupDB
+    shell: /bin/su -c "git clone git@github.com:flyinnet/shared-services.git"
+    register: result
+    ignore_errors: yes
+
+- name: cd_repository
+  when: result['failed'] == true
+  block:
+          - shell: "cd shared-services"
+    ignore_errors: yes
+
+- name: start_gitlab
+  when: result['failed'] == true
+  block:
+    - shell: "docker-compose up -d"
+    become: yes
+    ignore_errors: no

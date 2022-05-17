@@ -1,0 +1,6 @@
+[test]
+VM_test ansible_python_interpreter=/usr/bin/python3 ansible_host=192.168.1.38 ansible_ssh_private_key_file=/home/neon/.ssh/id_rsa ansible_user=test
+
+[csgo_servers]
+csgo ansible_python_interpreter=/usr/bin/python3 ansible_host=192.168.1.254 ansible_ssh_private_key_file=/home/neon/.ssh/id_rsa ansible_user=klaster
+
